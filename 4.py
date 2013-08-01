@@ -171,7 +171,7 @@ def solve_parking_puzzle(start, N=N):
     of (object, locations) pairs).  Return a path of [state, action, ...]
     alternating items; an action is a pair (object, distance_moved),
     such as ('B', 16) to move 'B' two squares down on the N=8 grid."""
-    return path_actions(shortest_path_search(grid(start, N), successors, is_goal))
+    return shortest_path_search(grid(start, N), successors, is_goal)
 
 # But it would also be nice to have a simpler format to describe puzzles,
 # and a way to visualize states.
@@ -241,7 +241,6 @@ def shortest_path_search(start, successors, is_goal):
         return [start]
     explored = set() # set of states we have visited
     frontier = [ [start] ] # ordered list of paths we have blazed
-    itera = 0
     while frontier:
         path = frontier.pop(0)
         s = path[-1]
@@ -253,11 +252,8 @@ def shortest_path_search(start, successors, is_goal):
                     return path2
                 else:
                     frontier.append(path2)
-        itera += 1
     return []
 
 def path_actions(path):
     "Return a list of actions in this path."
     return path[1::2]
-
-print path_actions(solve_parking_puzzle(puzzle1))

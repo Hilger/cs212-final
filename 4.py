@@ -110,25 +110,58 @@ def is_horizontal(tup):
 def is_car(tup):
     return tup[0] != "|" and tup[0] != "@"
 
+def move_car(state, car, spaces):
+    new_state = {}
+    car_tup = list([tup for tup in state if tup[0] == car][0])
+    car_tup[1] = tuple([i + spaces for i in car_tup[1]])
+    car_tup = tuple(car_tup)
+    new_car_state = [tup for tup in state if tup[0] != car]
+    new_car_state.append(car_tup)
+    new_car_state = tuple(new_car_state)
+    new_state[new_car_state] = (car, spaces)
+    return new_state
+
 def successors(state):
-    new_states = []
-    walls = [list(tup[1]) for tup in state if tup[0] == "|"][0]
+    new_states = {}
+
     for tup in state:
         if is_car(tup):
+            N = tup[1][1] - tup[1][0]
             current_car = tup[0]
+            walls = [num for _tup in state if _tup[0] != "@" \
+                    and _tup[0] != current_car for num in _tup[1]]
             if is_horizontal(tup[1]):
-                if tup[1][0] - 1 not in walls:
-                if tup[1][-1] + 1 not in walls:
+                left_position = tup[1][0]
+                right_position = tup[1][-1]
+                left_index = -1
+                right_index = 1
+                while all([i not in walls for i in \
+                range(left_position + left_index, left_position)]):
+                    new_states.update(move_car(state, current_car, left_index))
+                    left_index -= 1
+                while all([i not in walls for i in \
+                range(right_position, right_position + right_index)]):
+                    new_states.update(move_car(state, current_car, right_index))
+                    right_index += 1
             else:
-                height = tup[1] - tup[0]
-                if tup[1][0] - height not in walls:
-                if tup[1][1] + height not in walls:
+                top_position = tup[1][0]
+                bottom_position = tup[1][-1]
+                top_index = -1
+                bottom_index = 1
+                while all([i not in walls for i in \
+                range(top_position + (N * top_index) , top_position - N +1, N)]):
+                    new_states.update(move_car(state, current_car, N * top_index))
+                    top_index -= 1
+                while all([i not in walls for i in \
+                range(bottom_position + N, bottom_position+(bottom_index*N)+1, N)]):
+                    new_states.update(move_car(state, current_car, N * bottom_index))
+                    bottom_index += 1
     return new_states
 
 def is_goal(state):
     car_list = []
     for tup in state:
-        if is_car(tup):
+        if tup[0] == "*":
             car_list += list(tup[1])
     goal = [tup[1][0] for tup in state if tup[0] == "@"][0]
     return goal in car_list
@@ -138,7 +171,7 @@ def solve_parking_puzzle(start, N=N):
     of (object, locations) pairs).  Return a path of [state, action, ...]
     alternating items; an action is a pair (object, distance_moved),
     such as ('B', 16) to move 'B' two squares down on the N=8 grid."""
-    return shortest_path_search(grid(start, N), successors, is_goal)
+    return path_actions(shortest_path_search(grid(start, N), successors, is_goal))
 
 # But it would also be nice to have a simpler format to describe puzzles,
 # and a way to visualize states.
@@ -208,6 +241,7 @@ def shortest_path_search(start, successors, is_goal):
         return [start]
     explored = set() # set of states we have visited
     frontier = [ [start] ] # ordered list of paths we have blazed
+    itera = 0
     while frontier:
         path = frontier.pop(0)
         s = path[-1]
@@ -219,9 +253,11 @@ def shortest_path_search(start, successors, is_goal):
                     return path2
                 else:
                     frontier.append(path2)
+        itera += 1
     return []
 
 def path_actions(path):
     "Return a list of actions in this path."
     return path[1::2]
 
+print path_actions(solve_parking_puzzle(puzzle1))

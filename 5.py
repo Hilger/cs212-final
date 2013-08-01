@@ -287,4 +287,6 @@ def test_darts2():
              'S10': 0.016, 'S17': 0.016, 'S16': 0.016, 'S15': 0.016, 'S14': 0.016,
              'S7': 0.016, 'SB': 0.64}))
 
-test_darts2()
+print outcome('DB', .2)
+print outcome('S5', .2)
+print outcome('D20', .2)

@@ -104,11 +104,41 @@ puzzle1 = (
 
 N = 8
 
+def is_horizontal(tup):
+    return tup[0] == tup[1] - 1
+
+def is_car(tup):
+    return tup[0] != "|" and tup[0] != "@"
+
+def successors(state):
+    new_states = []
+    walls = [list(tup[1]) for tup in state if tup[0] == "|"][0]
+    for tup in state:
+        if is_car(tup):
+            current_car = tup[0]
+            if is_horizontal(tup[1]):
+                if tup[1][0] - 1 not in walls:
+                if tup[1][-1] + 1 not in walls:
+            else:
+                height = tup[1] - tup[0]
+                if tup[1][0] - height not in walls:
+                if tup[1][1] + height not in walls:
+    return new_states
+
+def is_goal(state):
+    car_list = []
+    for tup in state:
+        if is_car(tup):
+            car_list += list(tup[1])
+    goal = [tup[1][0] for tup in state if tup[0] == "@"][0]
+    return goal in car_list
+
 def solve_parking_puzzle(start, N=N):
     """Solve the puzzle described by the starting position (a tuple
     of (object, locations) pairs).  Return a path of [state, action, ...]
     alternating items; an action is a pair (object, distance_moved),
     such as ('B', 16) to move 'B' two squares down on the N=8 grid."""
+    return shortest_path_search(grid(start, N), successors, is_goal)
 
 # But it would also be nice to have a simpler format to describe puzzles,
 # and a way to visualize states.
@@ -116,7 +146,7 @@ def solve_parking_puzzle(start, N=N):
 
 def locs(start, n, incr=1):
     "Return a tuple of n locations, starting at start and incrementing by incr."
-
+    return tuple([i for i in range(start, (n-1) * incr + start + 1, incr)])
 
 def grid(cars, N=N):
     """Return a tuple of (object, locations) pairs -- the format expected for
@@ -126,7 +156,10 @@ def grid(cars, N=N):
     pair, like ('@', (31,)), to indicate this. The variable 'cars'  is a
     tuple of pairs like ('*', (26, 27)). The return result is a big tuple
     of the 'cars' pairs along with the walls and goal pairs."""
-
+    walls = (("|", tuple(set(list(locs(0, N)) + list(locs(N*N-N, N)) +
+                  list(locs(0, N, N)) + list(locs(N-1, N, N))))),)
+    goal = (('@', ((N*N)/2 - 1,)),)
+    return tuple(list(cars) + list(walls) + list(goal))
 
 def show(state, N=N):
     "Print a representation of a state as an NxN grid."
@@ -164,7 +197,6 @@ puzzle3 = grid((
     ('P', locs(36, 3)),
     ('O', locs(45, 2, N)),
     ('Y', locs(49, 3))))
-
 
 # Here are the shortest_path_search and path_actions functions from the unit.
 # You may use these if you want, but you don't have to.

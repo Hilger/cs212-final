@@ -102,6 +102,8 @@ puzzle1 = (
 
 # Your task is to define solve_parking_puzzle:
 
+import heapq
+
 N = 8
 
 def is_horizontal(tup):
@@ -123,39 +125,38 @@ def move_car(state, car, spaces):
 
 def successors(state):
     new_states = {}
-
     for tup in state:
         if is_car(tup):
             N = tup[1][1] - tup[1][0]
             current_car = tup[0]
-            walls = [num for _tup in state if _tup[0] != "@" \
-                    and _tup[0] != current_car for num in _tup[1]]
+            walls = set([num for _tup in state if _tup[0] != "@" \
+                    and _tup[0] != current_car for num in _tup[1]])
             if is_horizontal(tup[1]):
                 left_position = tup[1][0]
                 right_position = tup[1][-1]
-                left_index = -1
-                right_index = 1
-                while all([i not in walls for i in \
-                range(left_position + left_index, left_position)]):
-                    new_states.update(move_car(state, current_car, left_index))
+                left_index = 0
+                right_index = 0
+                while left_position + left_index - 1 not in walls:
                     left_index -= 1
-                while all([i not in walls for i in \
-                range(right_position, right_position + right_index)]):
-                    new_states.update(move_car(state, current_car, right_index))
+                while right_position + right_index + 1 not in walls:
                     right_index += 1
+                if left_index:
+                    new_states.update(move_car(state, current_car, left_index))
+                if right_index:
+                    new_states.update(move_car(state, current_car, right_index))
             else:
                 top_position = tup[1][0]
                 bottom_position = tup[1][-1]
-                top_index = -1
-                bottom_index = 1
-                while all([i not in walls for i in \
-                range(top_position + (N * top_index) , top_position - N +1, N)]):
-                    new_states.update(move_car(state, current_car, N * top_index))
+                top_index = 0
+                bottom_index = 0
+                while top_position + (N * top_index) - N not in walls:
                     top_index -= 1
-                while all([i not in walls for i in \
-                range(bottom_position + N, bottom_position+(bottom_index*N)+1, N)]):
-                    new_states.update(move_car(state, current_car, N * bottom_index))
+                while bottom_position+(bottom_index*N) + N not in walls:
                     bottom_index += 1
+                if top_index:
+                    new_states.update(move_car(state, current_car, N * top_index))
+                if bottom_index:
+                    new_states.update(move_car(state, current_car, N * bottom_index))
     return new_states
 
 def is_goal(state):
@@ -189,8 +190,10 @@ def grid(cars, N=N):
     pair, like ('@', (31,)), to indicate this. The variable 'cars'  is a
     tuple of pairs like ('*', (26, 27)). The return result is a big tuple
     of the 'cars' pairs along with the walls and goal pairs."""
-    walls = (("|", tuple(set(list(locs(0, N)) + list(locs(N*N-N, N)) +
-                  list(locs(0, N, N)) + list(locs(N-1, N, N))))),)
+    wall_list = list(locs(0, N)) + list(locs(N*N-N, N)) + \
+                  list(locs(N, N-1, N)) + list(locs(N+N-1, N-1, N))
+    wall_list.remove((N*N) / 2 - 1)
+    walls = (("|", tuple(set(wall_list)),),)
     goal = (('@', ((N*N)/2 - 1,)),)
     return tuple(list(cars) + list(walls) + list(goal))
 
@@ -240,9 +243,9 @@ def shortest_path_search(start, successors, is_goal):
     if is_goal(start):
         return [start]
     explored = set() # set of states we have visited
-    frontier = [ [start] ] # ordered list of paths we have blazed
+    frontier = [[0, [start]]] # ordered list of paths we have blazed
     while frontier:
-        path = frontier.pop(0)
+        itera, path = heapq.heappop(frontier)
         s = path[-1]
         for (state, action) in successors(s).items():
             if state not in explored:
@@ -251,7 +254,7 @@ def shortest_path_search(start, successors, is_goal):
                 if is_goal(state):
                     return path2
                 else:
-                    frontier.append(path2)
+                    heapq.heappush(frontier, [itera + 1, path2])
     return []
 
 def path_actions(path):
